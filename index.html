@@ -16,11 +16,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap">
 <style>
-/* Layout: one road-sign card centred on a sunny road; the car drives into a showroom box, name buttons below. Single bright daytime look by choice. */
+/* Layout: one fixed 1280×720 (16:9) screen, scaled to fit the device (Galaxy Tab S8 landscape = 1280×800).
+   Every screen is landscape: car on the left, big touch buttons on the right. Single bright daytime look by choice. */
 :root {
   color-scheme: light;
   --sky: #cfe9f7;
   --asphalt: #3a3f47;
+  --frame: #23272e;
   --lane: #ffd23f;
   --card: #fffdf6;
   --ink: #1f2a37;
@@ -33,115 +35,134 @@
   --body: "Gowun Dodum", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 }
 * { box-sizing: border-box; }
-html, body { min-height: 100%; }
+html, body { height: 100%; }
 body {
-  background: linear-gradient(var(--sky) 0 62%, var(--asphalt) 62% 100%) fixed;
-  color: var(--ink);
-  font-family: var(--body);
-  font-size: 17px;
-  padding-inline: 16px;
-  padding-block: 20px 40px;
+  margin: 0; overflow: hidden; background: var(--frame); color: var(--ink);
+  font-family: var(--body); font-size: 20px;
+  touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
 }
-.wrap { max-width: 640px; margin: 0 auto; display: grid; gap: 16px; }
-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-h1 { font-family: var(--display); font-weight: 400; font-size: clamp(26px, 6vw, 36px); margin: 0; text-wrap: balance; }
+#screen {
+  position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px;
+  transform: translate(-50%, -50%) scale(var(--s, 1)); transform-origin: center;
+  background: linear-gradient(var(--sky) 0 70%, var(--asphalt) 70% 100%);
+  display: grid; grid-template-rows: 64px 1fr; gap: 14px; padding: 18px 28px 26px;
+  overflow: hidden;
+}
+#screen::after { /* 도로 차선 */
+  content: ""; position: absolute; left: 0; right: 0; bottom: 10px; height: 6px;
+  background: repeating-linear-gradient(90deg, var(--lane) 0 60px, transparent 60px 120px); opacity: .9;
+}
+header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+h1 { font-family: var(--display); font-weight: 400; font-size: 40px; margin: 0; white-space: nowrap; }
 h1 span { color: var(--stop); }
-.hud { display: flex; gap: 8px; font-family: var(--display); font-size: 18px; }
-.chip { background: var(--card); border: 3px solid var(--ink); border-radius: 999px; padding: 4px 14px; font-variant-numeric: tabular-nums; }
-.card {
-  background: var(--card); border: 4px solid var(--ink); border-radius: 22px;
-  padding: 18px; display: grid; gap: 14px; box-shadow: 0 8px 0 rgba(0,0,0,.25);
+.bar { display: flex; gap: 10px; align-items: center; }
+.chip { font-family: var(--display); font-size: 24px; background: var(--card); border: 3px solid var(--ink); border-radius: 999px; padding: 6px 18px; font-variant-numeric: tabular-nums; }
+#app {
+  position: relative; z-index: 1; min-height: 0;
+  background: var(--card); border: 4px solid var(--ink); border-radius: 28px;
+  padding: 26px 30px; box-shadow: 0 8px 0 rgba(0,0,0,.25);
+  display: grid; overflow: hidden;
 }
-.stage {
-  position: relative; border-radius: 14px; overflow: hidden; aspect-ratio: 16/8; max-width: 100%;
-  background: linear-gradient(#f4f9fc 0 78%, #dfe6ec 78% 100%);
-  display: grid; place-items: center;
-}
-.stage img { width: 88%; max-height: 82%; object-fit: contain; margin-top: 4%; }
-.stage.drive img { animation: drive .7s cubic-bezier(.2,.8,.3,1); }
-.stage.peek img { filter: brightness(0); }
-@keyframes drive { from { transform: translateX(-120%); } to { transform: none; } }
-.question { font-family: var(--display); font-size: 26px; margin: 0; text-align: center; }
-.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* 버튼 */
 button {
-  font-family: var(--display); font-size: 22px; color: var(--ink);
-  background: #fff; border: 3px solid var(--ink); border-radius: 16px;
-  padding: 14px 10px; cursor: pointer; box-shadow: 0 5px 0 var(--ink);
+  font-family: var(--display); font-size: 30px; color: var(--ink);
+  background: #fff; border: 3px solid var(--ink); border-radius: 18px;
+  padding: 16px 12px; cursor: pointer; box-shadow: 0 6px 0 var(--ink);
   transition: transform .08s, box-shadow .08s;
 }
-button:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--ink); }
+button:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--ink); }
 button:focus-visible { outline: 4px solid var(--lane); outline-offset: 2px; }
 button:disabled { cursor: default; }
-.choice.right { background: var(--go); color: #fff; }
-.choice.wrong { background: var(--stop); color: #fff; animation: shake .4s; }
-@keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
-.small { font-size: 17px; padding: 8px 14px; box-shadow: 0 4px 0 var(--ink); border-radius: 12px; }
+.tool { font-size: 22px; padding: 8px 16px; border-radius: 14px; box-shadow: 0 4px 0 var(--ink); }
+.small { font-size: 22px; padding: 10px 18px; border-radius: 14px; box-shadow: 0 4px 0 var(--ink); }
 .primary { background: var(--lane); }
 .go { background: var(--go); color: #fff; }
-.feedback { font-family: var(--display); font-size: 26px; text-align: center; min-height: 1.3em; margin: 0; }
+.big { font-size: 38px; padding: 22px 12px; }
+
+/* 왼쪽 그림 / 오른쪽 조작 */
+.split { display: grid; grid-template-columns: 1.3fr 1fr; gap: 34px; min-height: 0; }
+.split > div { display: grid; gap: 16px; align-content: center; min-width: 0; min-height: 0; }
+.stage {
+  position: relative; border-radius: 20px; overflow: hidden; aspect-ratio: 16/9; width: 100%;
+  background: linear-gradient(#f4f9fc 0 76%, #dfe6ec 76% 100%);
+  display: grid; place-items: center;
+}
+.stage img { width: 86%; max-height: 84%; object-fit: contain; margin-top: 3%; }
+.stage.drive img { animation: drive .7s cubic-bezier(.2,.8,.3,1); }
+@keyframes drive { from { transform: translateX(-130%); } to { transform: none; } }
+.question { font-family: var(--display); font-size: 40px; margin: 0; text-align: center; }
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.choices.two { grid-template-columns: 1fr; }
+.choice { font-size: 36px; min-height: 112px; }
+.choice.right { background: var(--go); color: #fff; }
+.choice.wrong { background: var(--stop); color: #fff; animation: shake .4s; }
+@keyframes shake { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+.feedback { font-family: var(--display); font-size: 34px; text-align: center; min-height: 46px; margin: 0; }
 .feedback.ok { color: var(--go); }
 .feedback.no { color: var(--stop); }
-.seg { display: flex; gap: 8px; flex-wrap: wrap; }
-.seg button { font-size: 18px; padding: 8px 14px; box-shadow: 0 4px 0 var(--ink); border-radius: 12px; }
+
+/* 홈 설정 */
+.seg { display: flex; gap: 10px; flex-wrap: wrap; }
+.seg button { font-size: 24px; padding: 8px 18px; border-radius: 14px; box-shadow: 0 4px 0 var(--ink); }
 .seg button[aria-pressed="true"] { background: var(--lane); }
-.label { font-family: var(--display); font-size: 17px; margin: 0 0 6px; }
-.big { font-size: 28px; padding: 18px; }
+.setting { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 12px; }
+.label { font-family: var(--display); font-size: 24px; margin: 0; }
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.muted { color: var(--muted); font-size: 18px; line-height: 1.5; margin: 0; }
 .center { text-align: center; }
-.stars { font-size: 44px; letter-spacing: 6px; color: var(--lane); -webkit-text-stroke: 2px var(--ink); font-family: var(--display); }
-.muted { color: var(--muted); font-size: 15px; line-height: 1.6; margin: 0; }
-.tag { display: inline-block; font-family: var(--body); font-size: 13px; padding: 2px 10px; border-radius: 999px; color: #fff; vertical-align: middle; }
+.tag { display: inline-block; font-family: var(--body); font-size: 18px; padding: 3px 14px; border-radius: 999px; color: #fff; vertical-align: middle; }
 .tag.h { background: var(--hyundai); }
 .tag.k { background: var(--kia); }
-.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-.gallery figure { margin: 0; border: 3px solid var(--ink); border-radius: 12px; background: #f4f9fc; padding: 8px; display: grid; gap: 4px; text-align: center; }
-.gallery img { width: 100%; aspect-ratio: 2/1; object-fit: contain; }
-.gallery figcaption { font-family: var(--display); font-size: 16px; }
-/* 태블릿: 손가락 터치에 맞게, 가로 화면이면 왼쪽 사진 / 오른쪽 버튼 */
-body { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
-.split { display: grid; gap: 14px; }
-.split > div { display: grid; gap: 14px; align-content: center; min-width: 0; }
-.fs { font-size: 16px; padding: 6px 12px; box-shadow: 0 3px 0 var(--ink); border-radius: 12px; }
-@media (min-width: 900px) {
-  .wrap { max-width: 1080px; }
-  button { font-size: 26px; padding: 18px 12px; }
-  .question { font-size: 32px; }
-}
-@media (min-width: 820px) and (orientation: landscape) {
-  .split { grid-template-columns: 1.35fr 1fr; align-items: center; }
-  .choices { grid-template-columns: 1fr; }
-  .choices.two { gap: 18px; }
-  .choice { padding-block: 22px; }
-}
-.gallery figure { cursor: pointer; }
-.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.lname { font-family: var(--display); font-size: clamp(36px, 10vw, 56px); margin: 0; line-height: 1.1; }
-.lnav { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 12px; }
-.lnav button { font-size: 26px; }
+
+/* 배우기 */
+.lname { font-family: var(--display); font-size: 76px; margin: 0; line-height: 1.05; }
+.lnav { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 14px; }
+.lnav button { font-size: 36px; min-height: 96px; }
 #lstage { cursor: pointer; }
+
+/* 전체 보기 */
+.gwrap { display: grid; grid-template-rows: auto 1fr; gap: 14px; min-height: 0; }
+.gallery { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; overflow-y: auto; min-height: 0; padding: 4px 4px 8px; align-content: start; touch-action: pan-y; }
+.gallery figure { margin: 0; border: 3px solid var(--ink); border-radius: 14px; background: #f4f9fc; padding: 8px; display: grid; gap: 4px; text-align: center; cursor: pointer; }
+.gallery img { width: 100%; aspect-ratio: 16/9; object-fit: contain; }
+.gallery figcaption { font-family: var(--display); font-size: 22px; }
+
+/* 결과 */
+.stars { font-size: 96px; letter-spacing: 12px; color: var(--lane); -webkit-text-stroke: 3px var(--ink); font-family: var(--display); line-height: 1; }
+.finish { display: grid; gap: 18px; align-content: center; justify-items: center; text-align: center; }
+.finish .modes { width: 640px; }
+
 #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
-.credit { color: #e9edf2; font-size: 12px; text-align: center; margin: 0; }
-@media (max-width: 420px) { button { font-size: 19px; } .question { font-size: 22px; } }
+.credit { position: absolute; right: 30px; bottom: 22px; z-index: 2; color: #e9edf2; font-size: 14px; margin: 0; }
 @media (prefers-reduced-motion: reduce) { .stage.drive img, .choice.wrong { animation: none; } }
 </style>
 
 <canvas id="confetti"></canvas>
-<div class="wrap">
+<div id="screen">
   <header>
     <h1>부릉부릉 <span>차 이름</span> 맞히기</h1>
-    <div class="row">
-      <div class="hud" id="hud" hidden>
-        <span class="chip" id="hudQ">1/10</span>
-        <span class="chip" id="hudScore">⭐ 0</span>
-      </div>
-      <button class="fs" id="fsBtn" hidden>⛶ 전체 화면</button>
+    <div class="bar">
+      <span class="chip" id="hudQ" hidden>1/10</span>
+      <span class="chip" id="hudScore" hidden>⭐ 0</span>
+      <button class="tool primary" id="menuBtn" hidden>🏠 메뉴</button>
+      <button class="tool" id="fsBtn" hidden>⛶ 전체 화면</button>
     </div>
   </header>
-  <main id="app" class="card"></main>
+  <main id="app"></main>
   <p class="credit">차 이미지 출처: 다나와 자동차(auto.danawa.com)</p>
 </div>
 
 <script>
+// ---------- 16:9 화면을 기기에 맞춰 키우기/줄이기 ----------
+const screenEl = document.getElementById("screen");
+function fit() {
+  const s = Math.min(innerWidth / 1280, innerHeight / 720);
+  screenEl.style.setProperty("--s", s);
+}
+addEventListener("resize", fit);
+fit();
+
 // ---------- 자동차 데이터 ----------
 // cat: 비슷한 차끼리 오답 보기로 섞기 위한 분류, fam: 같은 이름 집안(아반떼 / 아반떼 N)
 const CARS = [
@@ -194,7 +215,6 @@ const CARS = [
   { id: "bongo",     name: "봉고",          brand: "기아", cat: "truck" },
 ];
 const imgOf = c => `img/${c.id}.webp`;
-// 미리 불러 두기
 CARS.forEach(c => { const i = new Image(); i.src = imgOf(c); });
 
 // ---------- 저장 ----------
@@ -273,9 +293,10 @@ function tick() {
   if (bits.length) requestAnimationFrame(tick); else cx.clearRect(0, 0, cv.width, cv.height);
 }
 
-// ---------- 게임 ----------
+// ---------- 공통 ----------
 const app = document.getElementById("app");
-const hud = document.getElementById("hud");
+const hudQ = document.getElementById("hudQ"), hudScore = document.getElementById("hudScore");
+const menuBtn = document.getElementById("menuBtn");
 const settings = { brand: "모두", level: "보통", voice: true, count: 10 };
 try { Object.assign(settings, JSON.parse(store.get("car-settings2") || "{}")); } catch {}
 let game;
@@ -283,40 +304,58 @@ const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).
 const tagOf = c => `<span class="tag ${c.brand === "현대" ? "h" : "k"}">${c.brand}</span>`;
 const pool = () => CARS.filter(c => settings.brand === "모두" || c.brand === settings.brand);
 
+// 화면 바꾸기: 홈이 아니면 위쪽에 🏠 메뉴 버튼이 늘 보여요
+function screen(name) {
+  stopLearn();
+  try { speechSynthesis.cancel(); } catch {}
+  const inQuiz = name === "quiz";
+  hudQ.hidden = hudScore.hidden = !inQuiz;
+  menuBtn.hidden = name === "home";
+}
+menuBtn.onclick = home;
+
 function segBtns(key, opts, labels) {
   return `<div class="seg" role="group">${opts.map((o, i) => `<button type="button" data-set="${key}" data-val="${o}" aria-pressed="${settings[key] === o}">${labels ? labels[i] : o}</button>`).join("")}</div>`;
 }
 
+// ---------- 홈 ----------
 function home() {
-  hud.hidden = true;
+  screen("home");
   const best = store.get("car-best2") || 0;
-  const sample = CARS[Math.floor(Math.random() * CARS.length)];
+  const sample = pool()[Math.floor(Math.random() * pool().length)];
   app.innerHTML = `
-    <div class="stage drive"><img alt="${sample.name}" src="${imgOf(sample)}"></div>
-    <p class="question">이 차 이름, 알아맞힐 수 있어?</p>
-    <div><p class="label">어느 회사 차?</p>${segBtns("brand", ["모두", "현대", "기아"])}</div>
-    <div><p class="label">난이도</p>${segBtns("level", ["쉬움", "보통", "어려움"])}
-      <p class="muted" style="margin-top:6px">쉬움: 보기 2개 · 보통: 보기 4개 · 어려움: 보기 4개, 비슷한 차끼리(아반떼와 아반떼 N 같은) 나와요</p></div>
-    <div><p class="label">문제 수</p>${segBtns("count", [5, 10, 20], ["5문제", "10문제", "20문제"])}</div>
-    <div class="row"><p class="label" style="margin:0">차 이름 읽어 주기</p>${segBtns("voice", [true, false], ["켜기", "끄기"])}</div>
-    <div class="modes">
-      <button class="big primary" id="learnBtn">📖 배우기</button>
-      <button class="big go" id="start">🚗 퀴즈 출발!</button>
-    </div>
-    <p class="muted center">최고 점수: ⭐ ${best}</p>`;
+    <div class="split">
+      <div>
+        <div class="stage drive"><img alt="${sample.name}" src="${imgOf(sample)}"></div>
+        <p class="question">이 차 이름, 알아맞힐 수 있어?</p>
+        <p class="muted center">최고 점수: ⭐ ${best}</p>
+      </div>
+      <div>
+        <div class="setting"><p class="label">회사</p>${segBtns("brand", ["모두", "현대", "기아"])}</div>
+        <div class="setting"><p class="label">난이도</p>${segBtns("level", ["쉬움", "보통", "어려움"])}</div>
+        <p class="muted">쉬움: 보기 2개 · 보통: 보기 4개 · 어려움: 비슷한 차끼리 4개</p>
+        <div class="setting"><p class="label">문제 수</p>${segBtns("count", [5, 10, 20], ["5문제", "10문제", "20문제"])}</div>
+        <div class="setting"><p class="label">읽어 주기</p>${segBtns("voice", [true, false], ["켜기", "끄기"])}</div>
+        <div class="modes">
+          <button class="big primary" id="learnBtn">📖 배우기</button>
+          <button class="big go" id="start">🚗 퀴즈!</button>
+        </div>
+      </div>
+    </div>`;
   app.querySelectorAll("[data-set]").forEach(b => b.onclick = () => {
     let v = b.dataset.val;
     if (v === "true") v = true; else if (v === "false") v = false; else if (/^\d+$/.test(v)) v = +v;
-    settings[b.dataset.set] = v; store.set("car-settings2", JSON.stringify(settings)); home();
+    settings[b.dataset.set] = v; store.set("car-settings2", JSON.stringify(settings));
+    b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
   });
   document.getElementById("start").onclick = start;
   document.getElementById("learnBtn").onclick = () => learn(0);
 }
 
+// ---------- 퀴즈 ----------
 function start() {
   const p = shuffle(pool());
   game = { list: p.slice(0, Math.min(settings.count, p.length)), i: 0, score: 0, streak: 0, right: 0 };
-  hud.hidden = false;
   ask();
 }
 
@@ -333,12 +372,13 @@ function distractors(car, n) {
 }
 
 function ask() {
+  screen("quiz");
   const car = game.list[game.i];
   const n = settings.level === "쉬움" ? 2 : 4;
   const opts = shuffle([car, ...distractors(car, n - 1)]);
   game.done = false;
-  document.getElementById("hudQ").textContent = `${game.i + 1}/${game.list.length}`;
-  document.getElementById("hudScore").textContent = `⭐ ${game.score}`;
+  hudQ.textContent = `${game.i + 1}/${game.list.length}`;
+  hudScore.textContent = `⭐ ${game.score}`;
   app.innerHTML = `
     <div class="split">
       <div>
@@ -348,7 +388,7 @@ function ask() {
       <div>
         <div class="choices${n === 2 ? " two" : ""}">${opts.map(c => `<button class="choice" data-id="${c.id}">${c.name}</button>`).join("")}</div>
         <p class="feedback" id="fb" aria-live="polite"></p>
-        <button class="big primary" id="next" hidden>다음 차 →</button>
+        <button class="big primary" id="next" style="visibility:hidden">다음 차 →</button>
       </div>
     </div>`;
   app.querySelectorAll(".choice").forEach(b => b.onclick = () => answer(b, car));
@@ -369,21 +409,24 @@ function answer(btn, car) {
     const pts = 10 + (game.streak >= 3 ? 5 : 0);
     game.score += pts;
     fb.className = "feedback ok";
-    fb.innerHTML = (game.streak >= 3 ? `딩동댕! ${game.streak}연속 정답! +${pts}` : `딩동댕! ${car.name}! +${pts}`) + ` ${tagOf(car)}`;
+    fb.innerHTML = (game.streak >= 3 ? `딩동댕! ${game.streak}연속! +${pts}` : `딩동댕! +${pts}`) + ` ${tagOf(car)}`;
     sndRight(); confetti(); say(`딩동댕! ${car.name}!`);
   } else {
     game.streak = 0;
     btn.classList.add("wrong");
     fb.className = "feedback no";
-    fb.innerHTML = `아쉬워! 정답은 ${car.name} ${tagOf(car)}`;
+    fb.innerHTML = `정답은 ${car.name} ${tagOf(car)}`;
     sndWrong(); say(`정답은 ${car.name}`);
   }
-  document.getElementById("hudScore").textContent = `⭐ ${game.score}`;
+  hudScore.textContent = `⭐ ${game.score}`;
   const next = document.getElementById("next");
-  next.hidden = false; next.textContent = game.i + 1 < game.list.length ? "다음 차 →" : "결과 보기 🏁"; next.focus();
+  next.style.visibility = "visible";
+  next.textContent = game.i + 1 < game.list.length ? "다음 차 →" : "결과 보기 🏁";
+  next.focus();
 }
 
 function finish() {
+  screen("finish");
   const total = game.list.length;
   const ratio = game.right / total;
   const stars = ratio >= .9 ? 3 : ratio >= .6 ? 2 : ratio >= .3 ? 1 : 0;
@@ -392,13 +435,15 @@ function finish() {
   if (newBest) store.set("car-best2", game.score);
   const msg = ["다시 해 보자! 할 수 있어!", "좋아! 조금만 더!", "우와, 자동차 박사네!", "최고! 진짜 자동차 박사님!"][stars];
   app.innerHTML = `
-    <div class="center" style="display:grid;gap:10px">
+    <div class="finish">
       <p class="question">🏁 도착!</p>
       <div class="stars">${"★".repeat(stars)}${"☆".repeat(3 - stars)}</div>
       <p class="question">${msg}</p>
       <p class="muted">${total}문제 중 ${game.right}개 정답 · 점수 ⭐ ${game.score}${newBest ? " · 새 최고 기록!" : ""}</p>
-      <button class="big go" id="again">한 번 더!</button>
-      <button class="small" id="homeBtn">처음으로</button>
+      <div class="modes">
+        <button class="big primary" id="homeBtn">🏠 메뉴</button>
+        <button class="big go" id="again">한 번 더!</button>
+      </div>
     </div>`;
   if (stars >= 2) confetti();
   say(msg);
@@ -413,15 +458,14 @@ function stopLearn() {
   if (keyHandler) { removeEventListener("keydown", keyHandler); keyHandler = null; }
 }
 function learn(idx) {
-  stopLearn();
-  hud.hidden = true;
+  screen("learn");
   const list = pool();
   const go = i => { idx = (i + list.length) % list.length; show(); };
   app.innerHTML = `
     <div class="split">
       <div><div class="stage" id="lstage"><img id="limg" alt=""></div></div>
       <div>
-        <div class="center" style="display:grid;gap:6px">
+        <div class="center" style="display:grid;gap:10px">
           <p class="lname" id="lname"></p>
           <div id="ltag"></div>
           <p class="muted" id="lcount"></p>
@@ -431,10 +475,9 @@ function learn(idx) {
           <button id="hear" class="primary" aria-label="이름 듣기">🔊 듣기</button>
           <button id="nextc" aria-label="다음 차">▶</button>
         </div>
-        <div class="row" style="justify-content:center">
+        <div class="modes">
           <button class="small" id="auto" aria-pressed="false">▶ 자동 넘기기</button>
           <button class="small" id="all">🚘 전체 보기</button>
-          <button class="small" id="lhome">처음으로</button>
         </div>
       </div>
     </div>`;
@@ -453,7 +496,6 @@ function learn(idx) {
   document.getElementById("nextc").onclick = () => go(idx + 1);
   document.getElementById("hear").onclick = () => say(list[idx].name, true);
   document.getElementById("all").onclick = () => gallery();
-  document.getElementById("lhome").onclick = () => { stopLearn(); home(); };
   const auto = document.getElementById("auto");
   auto.onclick = () => {
     if (autoTimer) { clearInterval(autoTimer); autoTimer = null; auto.textContent = "▶ 자동 넘기기"; auto.setAttribute("aria-pressed", "false"); }
@@ -475,16 +517,18 @@ function learn(idx) {
 
 // ---------- 전체 보기 ----------
 function gallery() {
-  stopLearn();
-  hud.hidden = true;
+  screen("gallery");
   const list = pool();
   app.innerHTML = `
-    <p class="question">🚘 전체 보기</p>
-    <p class="muted center">차를 누르면 크게 볼 수 있어요.</p>
-    <div class="gallery">${list.map((c, i) => `
-      <figure data-i="${i}" tabindex="0"><img alt="${c.name}" src="${imgOf(c)}" loading="lazy">
-      <figcaption>${c.name}</figcaption>${tagOf(c)}</figure>`).join("")}</div>
-    <button class="big primary" id="back">← 배우기로</button>`;
+    <div class="gwrap">
+      <div class="row" style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <p class="question" style="text-align:left">🚘 전체 보기 <span class="muted">차를 누르면 크게 볼 수 있어요</span></p>
+        <button class="small primary" id="back">📖 배우기로</button>
+      </div>
+      <div class="gallery">${list.map((c, i) => `
+        <figure data-i="${i}" tabindex="0"><img alt="${c.name}" src="${imgOf(c)}" loading="lazy">
+        <figcaption>${c.name}</figcaption></figure>`).join("")}</div>
+    </div>`;
   app.querySelectorAll("figure").forEach(f => {
     f.onclick = () => learn(+f.dataset.i);
     f.onkeydown = e => { if (e.key === "Enter") learn(+f.dataset.i); };
@@ -497,7 +541,7 @@ function gallery() {
   const btn = document.getElementById("fsBtn");
   const de = document.documentElement;
   const req = de.requestFullscreen || de.webkitRequestFullscreen;
-  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  const standalone = matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches || navigator.standalone;
   if (!req || standalone || !(document.fullscreenEnabled || document.webkitFullscreenEnabled)) return;
   btn.hidden = false;
   const isFs = () => document.fullscreenElement || document.webkitFullscreenElement;
