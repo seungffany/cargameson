@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#cfe9f7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="차 이름 맞히기">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)} body{margin:0} img{max-width:100%} [hidden]{display:none!important}</style>
+<title>부릉부릉 차 이름 맞히기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap">
+<style>
+/* Layout: one road-sign card centred on a sunny road; the car drives into a showroom box, name buttons below. Single bright daytime look by choice. */
+:root {
+  color-scheme: light;
+  --sky: #cfe9f7;
+  --asphalt: #3a3f47;
+  --lane: #ffd23f;
+  --card: #fffdf6;
+  --ink: #1f2a37;
+  --muted: #5b6676;
+  --go: #2fa85a;
+  --stop: #e2483d;
+  --hyundai: #1c3f94;
+  --kia: #111418;
+  --display: "Jua", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --body: "Gowun Dodum", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  background: linear-gradient(var(--sky) 0 62%, var(--asphalt) 62% 100%) fixed;
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 17px;
+  padding-inline: 16px;
+  padding-block: 20px 40px;
+}
+.wrap { max-width: 640px; margin: 0 auto; display: grid; gap: 16px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--display); font-weight: 400; font-size: clamp(26px, 6vw, 36px); margin: 0; text-wrap: balance; }
+h1 span { color: var(--stop); }
+.hud { display: flex; gap: 8px; font-family: var(--display); font-size: 18px; }
+.chip { background: var(--card); border: 3px solid var(--ink); border-radius: 999px; padding: 4px 14px; font-variant-numeric: tabular-nums; }
+.card {
+  background: var(--card); border: 4px solid var(--ink); border-radius: 22px;
+  padding: 18px; display: grid; gap: 14px; box-shadow: 0 8px 0 rgba(0,0,0,.25);
+}
+.stage {
+  position: relative; border-radius: 14px; overflow: hidden; aspect-ratio: 16/8; max-width: 100%;
+  background: linear-gradient(#f4f9fc 0 78%, #dfe6ec 78% 100%);
+  display: grid; place-items: center;
+}
+.stage img { width: 88%; max-height: 82%; object-fit: contain; margin-top: 4%; }
+.stage.drive img { animation: drive .7s cubic-bezier(.2,.8,.3,1); }
+.stage.peek img { filter: brightness(0); }
+@keyframes drive { from { transform: translateX(-120%); } to { transform: none; } }
+.question { font-family: var(--display); font-size: 26px; margin: 0; text-align: center; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+button {
+  font-family: var(--display); font-size: 22px; color: var(--ink);
+  background: #fff; border: 3px solid var(--ink); border-radius: 16px;
+  padding: 14px 10px; cursor: pointer; box-shadow: 0 5px 0 var(--ink);
+  transition: transform .08s, box-shadow .08s;
+}
+button:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--ink); }
+button:focus-visible { outline: 4px solid var(--lane); outline-offset: 2px; }
+button:disabled { cursor: default; }
+.choice.right { background: var(--go); color: #fff; }
+.choice.wrong { background: var(--stop); color: #fff; animation: shake .4s; }
+@keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.small { font-size: 17px; padding: 8px 14px; box-shadow: 0 4px 0 var(--ink); border-radius: 12px; }
+.primary { background: var(--lane); }
+.go { background: var(--go); color: #fff; }
+.feedback { font-family: var(--display); font-size: 26px; text-align: center; min-height: 1.3em; margin: 0; }
+.feedback.ok { color: var(--go); }
+.feedback.no { color: var(--stop); }
+.seg { display: flex; gap: 8px; flex-wrap: wrap; }
+.seg button { font-size: 18px; padding: 8px 14px; box-shadow: 0 4px 0 var(--ink); border-radius: 12px; }
+.seg button[aria-pressed="true"] { background: var(--lane); }
+.label { font-family: var(--display); font-size: 17px; margin: 0 0 6px; }
+.big { font-size: 28px; padding: 18px; }
+.center { text-align: center; }
+.stars { font-size: 44px; letter-spacing: 6px; color: var(--lane); -webkit-text-stroke: 2px var(--ink); font-family: var(--display); }
+.muted { color: var(--muted); font-size: 15px; line-height: 1.6; margin: 0; }
+.tag { display: inline-block; font-family: var(--body); font-size: 13px; padding: 2px 10px; border-radius: 999px; color: #fff; vertical-align: middle; }
+.tag.h { background: var(--hyundai); }
+.tag.k { background: var(--kia); }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.gallery figure { margin: 0; border: 3px solid var(--ink); border-radius: 12px; background: #f4f9fc; padding: 8px; display: grid; gap: 4px; text-align: center; }
+.gallery img { width: 100%; aspect-ratio: 2/1; object-fit: contain; }
+.gallery figcaption { font-family: var(--display); font-size: 16px; }
+/* 태블릿: 손가락 터치에 맞게, 가로 화면이면 왼쪽 사진 / 오른쪽 버튼 */
+body { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+.split { display: grid; gap: 14px; }
+.split > div { display: grid; gap: 14px; align-content: center; min-width: 0; }
+.fs { font-size: 16px; padding: 6px 12px; box-shadow: 0 3px 0 var(--ink); border-radius: 12px; }
+@media (min-width: 900px) {
+  .wrap { max-width: 1080px; }
+  button { font-size: 26px; padding: 18px 12px; }
+  .question { font-size: 32px; }
+}
+@media (min-width: 820px) and (orientation: landscape) {
+  .split { grid-template-columns: 1.35fr 1fr; align-items: center; }
+  .choices { grid-template-columns: 1fr; }
+  .choices.two { gap: 18px; }
+  .choice { padding-block: 22px; }
+}
+.gallery figure { cursor: pointer; }
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.lname { font-family: var(--display); font-size: clamp(36px, 10vw, 56px); margin: 0; line-height: 1.1; }
+.lnav { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 12px; }
+.lnav button { font-size: 26px; }
+#lstage { cursor: pointer; }
+#confetti { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+.credit { color: #e9edf2; font-size: 12px; text-align: center; margin: 0; }
+@media (max-width: 420px) { button { font-size: 19px; } .question { font-size: 22px; } }
+@media (prefers-reduced-motion: reduce) { .stage.drive img, .choice.wrong { animation: none; } }
+</style>
+
+<canvas id="confetti"></canvas>
+<div class="wrap">
+  <header>
+    <h1>부릉부릉 <span>차 이름</span> 맞히기</h1>
+    <div class="row">
+      <div class="hud" id="hud" hidden>
+        <span class="chip" id="hudQ">1/10</span>
+        <span class="chip" id="hudScore">⭐ 0</span>
+      </div>
+      <button class="fs" id="fsBtn" hidden>⛶ 전체 화면</button>
+    </div>
+  </header>
+  <main id="app" class="card"></main>
+  <p class="credit">차 이미지 출처: 다나와 자동차(auto.danawa.com)</p>
+</div>
+
+<script>
+// ---------- 자동차 데이터 ----------
+// cat: 비슷한 차끼리 오답 보기로 섞기 위한 분류, fam: 같은 이름 집안(아반떼 / 아반떼 N)
+const CARS = [
+  // 현대
+  { id: "avante",    name: "아반떼",        brand: "현대", cat: "sedan", fam: "avante" },
+  { id: "avante-n",  name: "아반떼 N",      brand: "현대", cat: "sedan", fam: "avante" },
+  { id: "sonata",    name: "쏘나타",        brand: "현대", cat: "sedan" },
+  { id: "grandeur",  name: "그랜저",        brand: "현대", cat: "sedan" },
+  { id: "casper",    name: "캐스퍼",        brand: "현대", cat: "small", fam: "casper" },
+  { id: "casper-ev", name: "캐스퍼 일렉트릭", brand: "현대", cat: "small", fam: "casper" },
+  { id: "venue",     name: "베뉴",          brand: "현대", cat: "suv" },
+  { id: "kona",      name: "코나",          brand: "현대", cat: "suv" },
+  { id: "tucson",    name: "투싼",          brand: "현대", cat: "suv" },
+  { id: "santafe",   name: "싼타페",        brand: "현대", cat: "bigsuv" },
+  { id: "palisade",  name: "팰리세이드",    brand: "현대", cat: "bigsuv" },
+  { id: "nexo",      name: "넥쏘",          brand: "현대", cat: "suv" },
+  { id: "ioniq3",    name: "아이오닉 3",    brand: "현대", cat: "ev" },
+  { id: "ioniq5",    name: "아이오닉 5",    brand: "현대", cat: "ev", fam: "ioniq5" },
+  { id: "ioniq5-n",  name: "아이오닉 5 N",  brand: "현대", cat: "ev", fam: "ioniq5" },
+  { id: "ioniq6",    name: "아이오닉 6",    brand: "현대", cat: "ev", fam: "ioniq6" },
+  { id: "ioniq6-n",  name: "아이오닉 6 N",  brand: "현대", cat: "ev", fam: "ioniq6" },
+  { id: "ioniq9",    name: "아이오닉 9",    brand: "현대", cat: "bigsuv" },
+  { id: "staria",    name: "스타리아",      brand: "현대", cat: "van" },
+  { id: "st1",       name: "ST1",           brand: "현대", cat: "van" },
+  { id: "porter",    name: "포터",          brand: "현대", cat: "truck" },
+  { id: "solati",    name: "쏠라티",        brand: "현대", cat: "bus" },
+  { id: "county",    name: "카운티",        brand: "현대", cat: "bus" },
+  { id: "mighty",    name: "마이티",        brand: "현대", cat: "truck" },
+  { id: "pavise",    name: "파비스",        brand: "현대", cat: "truck" },
+  // 기아
+  { id: "morning",   name: "모닝",          brand: "기아", cat: "small" },
+  { id: "ray",       name: "레이",          brand: "기아", cat: "small" },
+  { id: "k5",        name: "K5",            brand: "기아", cat: "sedan" },
+  { id: "k8",        name: "K8",            brand: "기아", cat: "sedan" },
+  { id: "k9",        name: "K9",            brand: "기아", cat: "sedan" },
+  { id: "seltos",    name: "셀토스",        brand: "기아", cat: "suv" },
+  { id: "niro",      name: "니로",          brand: "기아", cat: "suv" },
+  { id: "sportage",  name: "스포티지",      brand: "기아", cat: "suv" },
+  { id: "sorento",   name: "쏘렌토",        brand: "기아", cat: "bigsuv" },
+  { id: "tasman",    name: "타스만",        brand: "기아", cat: "truck" },
+  { id: "carnival",  name: "카니발",        brand: "기아", cat: "van" },
+  { id: "pv5",       name: "PV5",           brand: "기아", cat: "van", fam: "pv" },
+  { id: "pv7",       name: "PV7",           brand: "기아", cat: "van", fam: "pv" },
+  { id: "ev2",       name: "EV2",           brand: "기아", cat: "ev", fam: "ev" },
+  { id: "ev3",       name: "EV3",           brand: "기아", cat: "ev", fam: "ev" },
+  { id: "ev4",       name: "EV4",           brand: "기아", cat: "ev", fam: "ev" },
+  { id: "ev5",       name: "EV5",           brand: "기아", cat: "ev", fam: "ev" },
+  { id: "ev6",       name: "EV6",           brand: "기아", cat: "ev", fam: "ev" },
+  { id: "ev9",       name: "EV9",           brand: "기아", cat: "bigsuv" },
+  { id: "bongo",     name: "봉고",          brand: "기아", cat: "truck" },
+];
+const imgOf = c => `img/${c.id}.webp`;
+// 미리 불러 두기
+CARS.forEach(c => { const i = new Image(); i.src = imgOf(c); });
+
+// ---------- 저장 ----------
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+
+// ---------- 소리 ----------
+let actx;
+function beep(notes) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    let t = actx.currentTime;
+    notes.forEach(([f, d]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = "triangle"; o.frequency.value = f;
+      g.gain.setValueAtTime(.18, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d); t += d * .8;
+    });
+  } catch {}
+}
+const sndRight = () => beep([[523, .15], [659, .15], [784, .3]]);
+const sndWrong = () => beep([[220, .25], [180, .35]]);
+// 기기에 있는 한국어 목소리 중 가장 자연스러운 것을 고르기
+let koVoice = null;
+function pickVoice() {
+  try {
+    const ko = speechSynthesis.getVoices().filter(v => /^ko/i.test(v.lang));
+    const rank = v => {
+      const n = v.name;
+      if (/Natural|Online|Neural/i.test(n)) return 0;   // Edge/Windows 자연스러운 음성 (SunHi, InJoon 등)
+      if (/Google/i.test(n)) return 1;                   // Chrome 구글 음성
+      if (/Yuna|Premium|Enhanced|Siri/i.test(n)) return 2; // 애플 고품질 음성
+      if (!v.localService) return 3;
+      return 4;
+    };
+    koVoice = ko.sort((a, b) => rank(a) - rank(b))[0] || null;
+  } catch {}
+}
+try { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; } catch {}
+// 읽는 법: 알파벳은 영어 이름으로(EV → 이브이), 숫자는 영어로만(5 → 파이브)
+const LETTER = { A: "에이", B: "비", C: "씨", D: "디", E: "이", F: "에프", G: "지", H: "에이치", I: "아이", J: "제이", K: "케이", L: "엘", M: "엠", N: "엔", O: "오", P: "피", Q: "큐", R: "알", S: "에스", T: "티", U: "유", V: "브이", W: "더블유", X: "엑스", Y: "와이", Z: "지" };
+const DIGIT = ["제로", "원", "투", "쓰리", "포", "파이브", "식스", "세븐", "에잇", "나인"];
+const speakable = t => t
+  .replace(/[A-Z]+/g, w => [...w].map(c => LETTER[c]).join(""))
+  .replace(/\d/g, d => " " + DIGIT[d] + " ")
+  .replace(/\s+/g, " ").trim();
+function say(text, force) {
+  if (!settings.voice && !force) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(speakable(text));
+    u.lang = "ko-KR";
+    if (koVoice) u.voice = koVoice;
+    u.rate = .9; u.pitch = 1.1; u.volume = 1;
+    speechSynthesis.speak(u);
+  } catch {}
+}
+
+// ---------- 꽃가루 ----------
+const cv = document.getElementById("confetti"), cx = cv.getContext("2d");
+let bits = [];
+function confetti() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  cv.width = innerWidth; cv.height = innerHeight;
+  const cols = ["#ffd23f", "#2fa85a", "#e2483d", "#3f6fd8", "#ff8fb1"];
+  const running = bits.length > 0;
+  for (let i = 0; i < 90; i++) bits.push({ x: innerWidth / 2, y: innerHeight / 3, vx: (Math.random() - .5) * 14, vy: Math.random() * -12 - 2, c: cols[i % 5], r: Math.random() * 6 + 4, life: 90 });
+  if (!running) requestAnimationFrame(tick);
+}
+function tick() {
+  cx.clearRect(0, 0, cv.width, cv.height);
+  bits.forEach(b => { b.x += b.vx; b.y += b.vy; b.vy += .45; b.life--; cx.fillStyle = b.c; cx.fillRect(b.x, b.y, b.r, b.r * .6); });
+  bits = bits.filter(b => b.life > 0);
+  if (bits.length) requestAnimationFrame(tick); else cx.clearRect(0, 0, cv.width, cv.height);
+}
+
+// ---------- 게임 ----------
+const app = document.getElementById("app");
+const hud = document.getElementById("hud");
+const settings = { brand: "모두", level: "보통", voice: true, count: 10 };
+try { Object.assign(settings, JSON.parse(store.get("car-settings2") || "{}")); } catch {}
+let game;
+const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(v => v[1]);
+const tagOf = c => `<span class="tag ${c.brand === "현대" ? "h" : "k"}">${c.brand}</span>`;
+const pool = () => CARS.filter(c => settings.brand === "모두" || c.brand === settings.brand);
+
+function segBtns(key, opts, labels) {
+  return `<div class="seg" role="group">${opts.map((o, i) => `<button type="button" data-set="${key}" data-val="${o}" aria-pressed="${settings[key] === o}">${labels ? labels[i] : o}</button>`).join("")}</div>`;
+}
+
+function home() {
+  hud.hidden = true;
+  const best = store.get("car-best2") || 0;
+  const sample = CARS[Math.floor(Math.random() * CARS.length)];
+  app.innerHTML = `
+    <div class="stage drive"><img alt="${sample.name}" src="${imgOf(sample)}"></div>
+    <p class="question">이 차 이름, 알아맞힐 수 있어?</p>
+    <div><p class="label">어느 회사 차?</p>${segBtns("brand", ["모두", "현대", "기아"])}</div>
+    <div><p class="label">난이도</p>${segBtns("level", ["쉬움", "보통", "어려움"])}
+      <p class="muted" style="margin-top:6px">쉬움: 보기 2개 · 보통: 보기 4개 · 어려움: 보기 4개, 비슷한 차끼리(아반떼와 아반떼 N 같은) 나와요</p></div>
+    <div><p class="label">문제 수</p>${segBtns("count", [5, 10, 20], ["5문제", "10문제", "20문제"])}</div>
+    <div class="row"><p class="label" style="margin:0">차 이름 읽어 주기</p>${segBtns("voice", [true, false], ["켜기", "끄기"])}</div>
+    <div class="modes">
+      <button class="big primary" id="learnBtn">📖 배우기</button>
+      <button class="big go" id="start">🚗 퀴즈 출발!</button>
+    </div>
+    <p class="muted center">최고 점수: ⭐ ${best}</p>`;
+  app.querySelectorAll("[data-set]").forEach(b => b.onclick = () => {
+    let v = b.dataset.val;
+    if (v === "true") v = true; else if (v === "false") v = false; else if (/^\d+$/.test(v)) v = +v;
+    settings[b.dataset.set] = v; store.set("car-settings2", JSON.stringify(settings)); home();
+  });
+  document.getElementById("start").onclick = start;
+  document.getElementById("learnBtn").onclick = () => learn(0);
+}
+
+function start() {
+  const p = shuffle(pool());
+  game = { list: p.slice(0, Math.min(settings.count, p.length)), i: 0, score: 0, streak: 0, right: 0 };
+  hud.hidden = false;
+  ask();
+}
+
+function distractors(car, n) {
+  const others = shuffle(pool().filter(c => c.id !== car.id));
+  if (settings.level === "쉬움") {
+    // 쉬움: 모양이 다른 차를 보기로
+    return [...others.filter(c => c.cat !== car.cat), ...others].slice(0, n);
+  }
+  const fam = car.fam ? others.filter(c => c.fam === car.fam) : [];
+  const sameCat = others.filter(c => c.cat === car.cat);
+  const order = settings.level === "어려움" ? [...fam, ...sameCat, ...others] : [...sameCat.slice(0, 1), ...others];
+  return [...new Set(order)].slice(0, n);
+}
+
+function ask() {
+  const car = game.list[game.i];
+  const n = settings.level === "쉬움" ? 2 : 4;
+  const opts = shuffle([car, ...distractors(car, n - 1)]);
+  game.done = false;
+  document.getElementById("hudQ").textContent = `${game.i + 1}/${game.list.length}`;
+  document.getElementById("hudScore").textContent = `⭐ ${game.score}`;
+  app.innerHTML = `
+    <div class="split">
+      <div>
+        <div class="stage drive"><img alt="문제 자동차" src="${imgOf(car)}"></div>
+        <p class="question">이 차는 뭘까?</p>
+      </div>
+      <div>
+        <div class="choices${n === 2 ? " two" : ""}">${opts.map(c => `<button class="choice" data-id="${c.id}">${c.name}</button>`).join("")}</div>
+        <p class="feedback" id="fb" aria-live="polite"></p>
+        <button class="big primary" id="next" hidden>다음 차 →</button>
+      </div>
+    </div>`;
+  app.querySelectorAll(".choice").forEach(b => b.onclick = () => answer(b, car));
+  document.getElementById("next").onclick = () => { game.i++; game.i < game.list.length ? ask() : finish(); };
+}
+
+function answer(btn, car) {
+  if (game.done) return;
+  game.done = true;
+  const ok = btn.dataset.id === car.id;
+  const fb = document.getElementById("fb");
+  app.querySelectorAll(".choice").forEach(b => {
+    b.disabled = true;
+    if (b.dataset.id === car.id) b.classList.add("right");
+  });
+  if (ok) {
+    game.streak++; game.right++;
+    const pts = 10 + (game.streak >= 3 ? 5 : 0);
+    game.score += pts;
+    fb.className = "feedback ok";
+    fb.innerHTML = (game.streak >= 3 ? `딩동댕! ${game.streak}연속 정답! +${pts}` : `딩동댕! ${car.name}! +${pts}`) + ` ${tagOf(car)}`;
+    sndRight(); confetti(); say(`딩동댕! ${car.name}!`);
+  } else {
+    game.streak = 0;
+    btn.classList.add("wrong");
+    fb.className = "feedback no";
+    fb.innerHTML = `아쉬워! 정답은 ${car.name} ${tagOf(car)}`;
+    sndWrong(); say(`정답은 ${car.name}`);
+  }
+  document.getElementById("hudScore").textContent = `⭐ ${game.score}`;
+  const next = document.getElementById("next");
+  next.hidden = false; next.textContent = game.i + 1 < game.list.length ? "다음 차 →" : "결과 보기 🏁"; next.focus();
+}
+
+function finish() {
+  const total = game.list.length;
+  const ratio = game.right / total;
+  const stars = ratio >= .9 ? 3 : ratio >= .6 ? 2 : ratio >= .3 ? 1 : 0;
+  const best = +(store.get("car-best2") || 0);
+  const newBest = game.score > best;
+  if (newBest) store.set("car-best2", game.score);
+  const msg = ["다시 해 보자! 할 수 있어!", "좋아! 조금만 더!", "우와, 자동차 박사네!", "최고! 진짜 자동차 박사님!"][stars];
+  app.innerHTML = `
+    <div class="center" style="display:grid;gap:10px">
+      <p class="question">🏁 도착!</p>
+      <div class="stars">${"★".repeat(stars)}${"☆".repeat(3 - stars)}</div>
+      <p class="question">${msg}</p>
+      <p class="muted">${total}문제 중 ${game.right}개 정답 · 점수 ⭐ ${game.score}${newBest ? " · 새 최고 기록!" : ""}</p>
+      <button class="big go" id="again">한 번 더!</button>
+      <button class="small" id="homeBtn">처음으로</button>
+    </div>`;
+  if (stars >= 2) confetti();
+  say(msg);
+  document.getElementById("again").onclick = start;
+  document.getElementById("homeBtn").onclick = home;
+}
+
+// ---------- 배우기 (한 장씩 넘기기) ----------
+let autoTimer = null, keyHandler = null;
+function stopLearn() {
+  clearInterval(autoTimer); autoTimer = null;
+  if (keyHandler) { removeEventListener("keydown", keyHandler); keyHandler = null; }
+}
+function learn(idx) {
+  stopLearn();
+  hud.hidden = true;
+  const list = pool();
+  const go = i => { idx = (i + list.length) % list.length; show(); };
+  app.innerHTML = `
+    <div class="split">
+      <div><div class="stage" id="lstage"><img id="limg" alt=""></div></div>
+      <div>
+        <div class="center" style="display:grid;gap:6px">
+          <p class="lname" id="lname"></p>
+          <div id="ltag"></div>
+          <p class="muted" id="lcount"></p>
+        </div>
+        <div class="lnav">
+          <button id="prev" aria-label="이전 차">◀</button>
+          <button id="hear" class="primary" aria-label="이름 듣기">🔊 듣기</button>
+          <button id="nextc" aria-label="다음 차">▶</button>
+        </div>
+        <div class="row" style="justify-content:center">
+          <button class="small" id="auto" aria-pressed="false">▶ 자동 넘기기</button>
+          <button class="small" id="all">🚘 전체 보기</button>
+          <button class="small" id="lhome">처음으로</button>
+        </div>
+      </div>
+    </div>`;
+  const stage = document.getElementById("lstage");
+  function show() {
+    const c = list[idx];
+    const img = document.getElementById("limg");
+    stage.classList.remove("drive"); void stage.offsetWidth; stage.classList.add("drive");
+    img.src = imgOf(c); img.alt = c.name;
+    document.getElementById("lname").textContent = c.name;
+    document.getElementById("ltag").innerHTML = tagOf(c);
+    document.getElementById("lcount").textContent = `${idx + 1} / ${list.length}`;
+    say(c.name, true);
+  }
+  document.getElementById("prev").onclick = () => go(idx - 1);
+  document.getElementById("nextc").onclick = () => go(idx + 1);
+  document.getElementById("hear").onclick = () => say(list[idx].name, true);
+  document.getElementById("all").onclick = () => gallery();
+  document.getElementById("lhome").onclick = () => { stopLearn(); home(); };
+  const auto = document.getElementById("auto");
+  auto.onclick = () => {
+    if (autoTimer) { clearInterval(autoTimer); autoTimer = null; auto.textContent = "▶ 자동 넘기기"; auto.setAttribute("aria-pressed", "false"); }
+    else { autoTimer = setInterval(() => go(idx + 1), 3500); auto.textContent = "⏸ 멈추기"; auto.setAttribute("aria-pressed", "true"); }
+  };
+  // 손가락으로 밀어서 넘기기
+  let sx = null;
+  stage.addEventListener("touchstart", e => { sx = e.touches[0].clientX; }, { passive: true });
+  stage.addEventListener("touchend", e => {
+    if (sx === null) return;
+    const dx = e.changedTouches[0].clientX - sx; sx = null;
+    if (Math.abs(dx) > 40) go(idx + (dx < 0 ? 1 : -1));
+  });
+  stage.onclick = () => say(list[idx].name, true);
+  keyHandler = e => { if (e.key === "ArrowRight") go(idx + 1); if (e.key === "ArrowLeft") go(idx - 1); };
+  addEventListener("keydown", keyHandler);
+  show();
+}
+
+// ---------- 전체 보기 ----------
+function gallery() {
+  stopLearn();
+  hud.hidden = true;
+  const list = pool();
+  app.innerHTML = `
+    <p class="question">🚘 전체 보기</p>
+    <p class="muted center">차를 누르면 크게 볼 수 있어요.</p>
+    <div class="gallery">${list.map((c, i) => `
+      <figure data-i="${i}" tabindex="0"><img alt="${c.name}" src="${imgOf(c)}" loading="lazy">
+      <figcaption>${c.name}</figcaption>${tagOf(c)}</figure>`).join("")}</div>
+    <button class="big primary" id="back">← 배우기로</button>`;
+  app.querySelectorAll("figure").forEach(f => {
+    f.onclick = () => learn(+f.dataset.i);
+    f.onkeydown = e => { if (e.key === "Enter") learn(+f.dataset.i); };
+  });
+  document.getElementById("back").onclick = () => learn(0);
+}
+
+// ---------- 전체 화면 ----------
+(function () {
+  const btn = document.getElementById("fsBtn");
+  const de = document.documentElement;
+  const req = de.requestFullscreen || de.webkitRequestFullscreen;
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  if (!req || standalone || !(document.fullscreenEnabled || document.webkitFullscreenEnabled)) return;
+  btn.hidden = false;
+  const isFs = () => document.fullscreenElement || document.webkitFullscreenElement;
+  const label = () => { btn.textContent = isFs() ? "✕ 전체 화면 끄기" : "⛶ 전체 화면"; };
+  btn.onclick = () => {
+    try {
+      const p = isFs() ? (document.exitFullscreen || document.webkitExitFullscreen).call(document) : req.call(de);
+      if (p && p.catch) p.catch(() => { btn.hidden = true; });
+    } catch { btn.hidden = true; }
+  };
+  document.addEventListener("fullscreenchange", label);
+  document.addEventListener("webkitfullscreenchange", label);
+})();
+
+home();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+</script>
+</html>
